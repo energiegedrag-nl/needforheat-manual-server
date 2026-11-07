@@ -7,7 +7,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"golang.org/x/text/language"
 )
 

@@ -5,7 +5,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 )
 
 // CleanPathRedirect cleans the path and redirects if it changed, except for /assets/.
