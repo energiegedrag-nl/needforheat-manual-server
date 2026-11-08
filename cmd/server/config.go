@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/energietransitie/needforheat-manual-server/parser"
+	"github.com/energiegedrag-nl/needforheat-manual-server/parser"
 	"golang.org/x/text/language"
 )
 
@@ -27,7 +27,7 @@ type Config struct {
 	//
 	// This can be a local directory or a git repository.
 	// A local directory has to be a regular path (e.g. 'source' or './source').
-	// A git repository has to start with https:// and end with .git (e.g. 'https://github.com/energietransitie/twomes-presence-detector-firmware.git').
+	// A git repository has to start with https:// and end with .git (e.g. 'https://github.com/energiegedrag-nl/needforheat-presence-detector-firmware.git').
 	//
 	// The default branch is used, unless you set NFH_MANUAL_SOURCE_BRANCH to a branch name.
 	Source fs.FS

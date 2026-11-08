@@ -8,6 +8,6 @@ services:
     volumes:
       - ./source:/source
     environment:
-      - NFH_MANUAL_SOURCE=https://github.com/energietransitie/needforheat-manuals.git
+      - NFH_MANUAL_SOURCE=https://github.com/energiegedrag-nl/needforheat-manuals.git
       - NFH_MANUAL_SOURCE_BRANCH=tst
       - NFH_FALLBACK_LANG=en-US

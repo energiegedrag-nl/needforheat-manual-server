@@ -1,6 +1,8 @@
 # NeedForHeat manual server
 Server that server NeedForHeat manuals written in Markdown.
 
+> **Own deployment.** This repository is maintained by [energiegedrag-nl](https://github.com/energiegedrag-nl) and deployed under `energiegedrag.nl`. To run your own instance, replace `energiegedrag-nl` by your GitHub organisation and `energiegedrag.nl` by your domain (hosts used: `api.<domain>`, `manuals.<domain>`), consistently in configuration and build settings.
+
 ## Table of contents
 * [Deploying](#deploying)
 * [Developing](#developing)
@@ -13,15 +15,15 @@ Server that server NeedForHeat manuals written in Markdown.
 
 ## Deploying
 For our process to deploy the API to our public server, or update it, see these links:
-- Deploy: https://github.com/energietransitie/twomes-backoffice-configuration#manuals
-- Update: https://github.com/energietransitie/twomes-backoffice-configuration#updating
+- Deploy: https://github.com/energiegedrag-nl/needforheat-server-configuration#manuals
+- Update: https://github.com/energiegedrag-nl/needforheat-server-configuration#updating
 
 ### Prerequisites
 The NeedForHeat manual server is available as a Docker image.
 You will need to [install Docker](https://docs.docker.com/engine/install/) to run it.
 
 ### Images
-See all [available images](https://github.com/energietransitie/needforheat-manual-server/pkgs/container/needforheat-manual-server):
+See all [available images](https://github.com/energiegedrag-nl/needforheat-manual-server/pkgs/container/needforheat-manual-server):
 - Use the `latest` tag to get the latest stable release built from a tagged GitHub release. 
 - Use the `main` tag to get the latest development release, built directly from the `main` branch.
 
@@ -31,13 +33,13 @@ version: "3.8"
 services:
   web:
     container_name: needforheat-manual-server
-    image: ghcr.io/energietransitie/needforheat-manual-server:latest
+    image: ghcr.io/energiegedrag-nl/needforheat-manual-server:latest
     ports:
       - 8080:8080
     volumes:
       - ./source:/source
     environment:
-      - NFH_MANUAL_SOURCE=https://github.com/energietransitie/needforheat-manuals.git
+      - NFH_MANUAL_SOURCE=https://github.com/energiegedrag-nl/needforheat-manuals.git
       - NFH_MANUAL_SOURCE_BRANCH=tst
       - NFH_FALLBACK_LANG=en-US
 ```
@@ -119,16 +121,19 @@ If you use this repository in your research or work, please cite the following p
 **Note:** This is a pre-print submitted on 8 Sep 2025 and has not yet been peer-reviewed. For the full paper, see [https://arxiv.org/abs/2509.06927](https://arxiv.org/abs/2509.06927).
 
 ## Credits
-This software is created by:
-* Nick van Ravenzwaaij · [@n-vr](https://github.com/n-vr)
-
-Product owner:
+Author:
 * Henri ter Hofte · [@henriterhofte](https://github.com/henriterhofte)
 
-Thanks also goes to:
+This repository continues [energietransitie/needforheat-manual-server](https://github.com/energietransitie/needforheat-manual-server), made by the Research group Energy Transition at Windesheim University of Applied Sciences.
+Thanks to the authors and contributors of the original:
+* Nick van Ravenzwaaij · [@n-vr](https://github.com/n-vr)
 * Harris Mesic - [@Labhatorian](https://github.com/Labhatorian)
 
 We use and gratefully acknowlegde the efforts of the makers of the following source code and libraries:
 * [chi](https://github.com/go-chi/chi), by Peter Kieltyka, Google Inc, licensed under [MIT license](https://github.com/go-chi/chi/blob/master/LICENSE)
 * [markdown](https://github.com/gomarkdown/markdown), by Russ Ross, Krzysztof Kowalczyk, licensed under [BSD 2-clause license](https://github.com/gomarkdown/markdown/blob/master/LICENSE.txt)
 * [go-git](https://github.com/go-git/go-git), by Sourced Technologies, S.L., lincensed under [Apache 2.0 license](https://github.com/go-git/go-git/blob/master/LICENSE)
+
+### AI assistance
+
+Since November 2026, parts of the maintenance of this repository have been done with [Claude Code](https://claude.com/claude-code) (Anthropic), under the author's direction and review. Commits made this way carry a `Co-Authored-By: Claude …` trailer. The author remains responsible for all content.
