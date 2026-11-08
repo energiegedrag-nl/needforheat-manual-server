@@ -7,7 +7,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/energietransitie/needforheat-manual-server/wfs"
+	"github.com/energiegedrag-nl/needforheat-manual-server/wfs"
 )
 
 var (

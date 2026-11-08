@@ -16,8 +16,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/energietransitie/needforheat-manual-server/defaults"
-	"github.com/energietransitie/needforheat-manual-server/wfs"
+	"github.com/energiegedrag-nl/needforheat-manual-server/defaults"
+	"github.com/energiegedrag-nl/needforheat-manual-server/wfs"
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/ast"
 	"github.com/gomarkdown/markdown/html"
