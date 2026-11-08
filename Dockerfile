@@ -1,7 +1,7 @@
-FROM --platform=$BUILDPLATFORM golang:1.20 as build
+FROM --platform=$BUILDPLATFORM golang:1.27 AS build
 
-ARG GOOS=$TARGETOS
-ARG GOARCH=$TARGETARCH
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /go/src/needforheat-manual-server
 
@@ -10,18 +10,18 @@ RUN mkdir /source && \
     mkdir /parsed
 
 # Download dependencies.
-COPY ./go.mod ./go.sum .
+COPY ./go.mod ./go.sum ./
 RUN go mod download
 
 # Build healthcheck binary.
 COPY ./cmd/healthcheck/ ./cmd/healthcheck/
-RUN CGO_ENABLED=0 go build -o /go/bin/healthcheck ./cmd/healthcheck/
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /go/bin/healthcheck ./cmd/healthcheck/
 
 # Build server binary.
 COPY . .
-RUN CGO_ENABLED=0 go build -o /go/bin/server ./cmd/server/
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /go/bin/server ./cmd/server/
 
-FROM gcr.io/distroless/static-debian11
+FROM gcr.io/distroless/static-debian13:nonroot
 
 # Copy /source and /parsed folders with correct permissions.
 COPY --from=build --chown=nonroot /source /source

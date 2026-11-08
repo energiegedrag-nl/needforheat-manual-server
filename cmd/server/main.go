@@ -14,8 +14,8 @@ import (
 	custommiddleware "github.com/energietransitie/needforheat-manual-server/middleware"
 	"github.com/energietransitie/needforheat-manual-server/parser"
 	"github.com/energietransitie/needforheat-manual-server/wfs/dirfs"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -55,9 +55,13 @@ func main() {
 	r.Mount("/", server)
 
 	httpServer := &http.Server{
-		Addr:        ":8080",
-		Handler:     r,
-		BaseContext: returnContextFn(ctx),
+		Addr:              ":8080",
+		Handler:           r,
+		BaseContext:       returnContextFn(ctx),
+		ReadHeaderTimeout: 10 * time.Second, // Protects against slowloris (gosec G112).
+		ReadTimeout:       60 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
 	err = listenAndServe(ctx, httpServer)
