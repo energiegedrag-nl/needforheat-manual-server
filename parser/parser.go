@@ -103,6 +103,13 @@ func (p *Parser) parseRecursive(sourceFS fs.FS, pathName string) error {
 		if isIgnoredFile(entry) {
 			continue
 		} else if isMarkdownFile(entry) {
+			// Manuals always live in a languages/ folder (docs/source-folder-structure.md). Other markdown,
+			// such as a TODO.md or CHANGELOG.md in the root of the manual source or of a firmware repository,
+			// has no template and used to stop the server ("pattern matches no files: `unknown.html`").
+			if !isManualFile(pathName) {
+				log.Println("skipping markdown outside a languages folder:", fullPath)
+				continue
+			}
 			err = p.parseMdToHTML(sourceFS, fullPath)
 			if err != nil {
 				return err
@@ -382,6 +389,11 @@ func isIgnoredFile(d fs.DirEntry) bool {
 	default:
 		return false
 	}
+}
+
+// Returns if a markdown file in the directory dirPath is a manual: only files in a languages folder are.
+func isManualFile(dirPath string) bool {
+	return path.Base(dirPath) == "languages"
 }
 
 // Returns if d is a markdown file.
