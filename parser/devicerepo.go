@@ -14,11 +14,15 @@ import (
 // DeviceRepoSource is a git repo that contains manuals made by developers of a device.
 type DeviceRepoSource struct {
 	fs.FS
-	repoName string
+	deviceName string
 }
 
-// Create a new source filesystem from a directory at path.
-func NewDeviceRepoSource(url string, auth transport.AuthMethod) (fs.FS, error) {
+// Create a new source filesystem from the firmware repository at url.
+//
+// deviceName is the device type folder in the manual source (devices/<deviceName>/details.json); the manuals of the
+// repository are placed under that name, because that is where the app looks. The repository name is only used when
+// deviceName is empty: since the repositories were renamed (twomes-… to needforheat-…) the two no longer match.
+func NewDeviceRepoSource(url string, deviceName string, auth transport.AuthMethod) (fs.FS, error) {
 	gitFS, repoName, err := newGitFSWithAuth(url, "", auth)
 	if err != nil {
 		if errors.Is(err, transport.ErrAuthenticationRequired) {
@@ -29,7 +33,10 @@ func NewDeviceRepoSource(url string, auth transport.AuthMethod) (fs.FS, error) {
 		return nil, err
 	}
 
-	return DeviceRepoSource{gitFS, repoName}, nil
+	if deviceName == "" {
+		deviceName = repoName
+	}
+	return DeviceRepoSource{gitFS, deviceName}, nil
 }
 
 // Get the path to copy a file to at the destination filesystem.
@@ -49,9 +56,8 @@ func (repo DeviceRepoSource) GetDestinationFilePath(filePath string) string {
 	splitDirPath := strings.Split(dir, string(os.PathSeparator))
 
 	// Replace docs/manuals with devices/{deviceName}.
-	// Device name is the same as repo name.
 	splitDirPath[0] = "devices"
-	splitDirPath[1] = repo.repoName
+	splitDirPath[1] = repo.deviceName
 
 	// Add "manuafacturer" to the dir path as 'campaign', just before the last element.
 	subDir := splitDirPath[len(splitDirPath)-1]

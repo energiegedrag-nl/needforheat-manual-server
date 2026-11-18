@@ -129,9 +129,14 @@ func (s *Server) handleLanguageRedirect(w http.ResponseWriter, r *http.Request) 
 
 	acceptLang := r.Header.Get("Accept-Language")
 
-	lang, err := ChooseFile(availableLangs, s.options.FallbackLanguage, acceptLang)
-	if err != nil {
-		return NewHandlerError(err, http.StatusInternalServerError)
+	// A relative link between manuals (../../privacy-full/) has no language in it. Keep the language of the page
+	// the link was on, instead of choosing again from Accept-Language (the app passes the language in the path).
+	lang, ok := languageFromReferer(r, availableLangs)
+	if !ok {
+		lang, err = ChooseFile(availableLangs, s.options.FallbackLanguage, acceptLang)
+		if err != nil {
+			return NewHandlerError(err, http.StatusInternalServerError)
+		}
 	}
 
 	redirectPath := "/" + path.Join(urlPath, lang) + "/"
@@ -153,6 +158,10 @@ func manufacturerFallbackMiddleware(next Handler) Handler {
 				urlPath := strings.Trim(r.URL.Path, "/")
 
 				splitURLPath := strings.Split(urlPath, "/")
+				if splitURLPath[len(splitURLPath)-1] == manufacturerManual {
+					// No manufacturer manual either: 404, not a redirect to itself (ERR_TOO_MANY_REDIRECTS).
+					return err
+				}
 				splitURLPath[len(splitURLPath)-1] = manufacturerManual
 
 				redirectPath := "/" + path.Join(splitURLPath...) + "/"
