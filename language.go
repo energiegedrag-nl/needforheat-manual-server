@@ -3,6 +3,9 @@ package needforheatmanualserver
 import (
 	"errors"
 	"io/fs"
+	"net/http"
+	"net/url"
+	"strings"
 
 	"golang.org/x/text/language"
 )
@@ -80,4 +83,25 @@ func setCorrectFallbackOrder(options []language.Tag, fallback language.Tag) []la
 	}
 
 	return options
+}
+
+// The language of the referring page, if that page is on this server and has one of the available languages as a
+// path segment (for example /campaigns/generic/privacy/nl-NL/). Used for relative links between manuals.
+func languageFromReferer(r *http.Request, available []language.Tag) (string, bool) {
+	ref, err := url.Parse(r.Referer())
+	if err != nil || ref.Host == "" || ref.Host != r.Host {
+		return "", false
+	}
+	for _, segment := range strings.Split(strings.Trim(ref.Path, "/"), "/") {
+		tag, err := language.Parse(segment)
+		if err != nil {
+			continue
+		}
+		for _, a := range available {
+			if a == tag {
+				return a.String(), true
+			}
+		}
+	}
+	return "", false
 }

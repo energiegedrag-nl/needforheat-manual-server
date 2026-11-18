@@ -213,7 +213,8 @@ func (p *Parser) getRepoManual(sourceFS fs.FS, filePath string) error {
 	}
 
 	// TODO: possibly support authentication.
-	deviceRepo, err := NewDeviceRepoSource(details.Repo, nil)
+	// filePath is devices/<device type>/details.json: the device type folder names the destination.
+	deviceRepo, err := NewDeviceRepoSource(details.Repo, path.Base(path.Dir(filePath)), nil)
 	if err != nil {
 		return err
 	}
