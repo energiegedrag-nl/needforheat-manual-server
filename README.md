@@ -42,7 +42,20 @@ services:
       - NFH_MANUAL_SOURCE=https://github.com/energiegedrag-nl/needforheat-manuals.git
       - NFH_MANUAL_SOURCE_BRANCH=tst
       - NFH_FALLBACK_LANG=en-US
+      # Optional: reload the manuals without a restart (see below).
+      - NFH_ADMIN_ADDR=:8081
+      - NFH_ADMIN_TOKEN=<a long random string>
 ```
+
+### Reloading the manuals
+The server fetches and parses the manuals at start-up. To serve a change in the manuals repository without a restart, set `NFH_ADMIN_ADDR` (e.g. `:8081`) and, recommended, `NFH_ADMIN_TOKEN`. The server then also listens on that address for
+
+| Request | Does |
+|---|---|
+| `GET /admin/status` | which version is served: `source`, `branch`, `commit`, `loaded_at` (JSON) |
+| `POST /admin/reload` | clone and parse the manuals again and serve them; on an error (502) the old manuals stay |
+
+with `Authorization: Bearer <NFH_ADMIN_TOKEN>`. Do not publish this port: keep it on the internal Docker network (Traefik only routes port 8080). The [Energiegedrag Cockpit](https://github.com/energiegedrag-nl/energiegedrag-cockpit) has a button for it.
 
 ## Developing
 This section describes how you can change the source code using a development environment and compile the source code into a binary release of the firmware that can be deployed, either via the development environment, or via the method described in the section [Deploying](#deploying).
@@ -99,6 +112,7 @@ Ready:
 * Redirect to generic campaign if none is specified.
 * Redirect to device firmware repository for missing manuals.
 * Manual source can be set to local directory or git repository.
+* Reload the manuals on request, without restarting the server (`NFH_ADMIN_ADDR`).
 
 To-do:
 * Watching for file changes and update without restarting the server.

@@ -218,6 +218,10 @@ func (p *Parser) getRepoManual(sourceFS fs.FS, filePath string) error {
 	if err != nil {
 		return err
 	}
+	if deviceRepo == nil {
+		return nil // needs authentication; logged
+	}
+	defer CloseSource(deviceRepo) //nolint:errcheck // a leftover temporary directory is harmless
 
 	return p.Parse(deviceRepo)
 }

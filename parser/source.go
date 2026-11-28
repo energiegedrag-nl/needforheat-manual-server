@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"log"
 	"os"
-	"path"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -49,11 +48,18 @@ func GetDestinationDirPath(source fs.FS, dirPath string) (string, error) {
 	return "", ErrNotSourceFS
 }
 
+// A clone of a git repo: its files, the directory they are in and the commit.
+type gitClone struct {
+	fsys   fs.FS
+	dir    string
+	commit string
+}
+
 // Create a new source filesystem from a git repo at url.
-func newGitFSWithAuth(url string, branch string, auth transport.AuthMethod) (fs.FS, string, error) {
+func newGitFSWithAuth(url string, branch string, auth transport.AuthMethod) (gitClone, error) {
 	dir, err := mkdirTemp()
 	if err != nil {
-		return nil, "", err
+		return gitClone{}, err
 	}
 
 	opts := &git.CloneOptions{
@@ -68,17 +74,42 @@ func newGitFSWithAuth(url string, branch string, auth transport.AuthMethod) (fs.
 
 	repo, err := git.PlainClone(dir, false, opts)
 	if err != nil {
-		return nil, "", err
+		_ = os.RemoveAll(dir)
+		return gitClone{}, err
 	}
 
 	ref, err := repo.Head()
 	if err != nil {
-		return nil, "", err
+		_ = os.RemoveAll(dir)
+		return gitClone{}, err
 	}
 
 	log.Println("cloned", url, "at", ref.Hash().String())
 
-	return os.DirFS(dir), path.Base(url), err
+	return gitClone{fsys: os.DirFS(dir), dir: dir, commit: ref.Hash().String()}, nil
+}
+
+// CloseSource removes the files of a source that was cloned for parsing (a git repo); other sources are left alone.
+func CloseSource(source fs.FS) error {
+	switch s := source.(type) {
+	case LabRepoSource:
+		if s.Dir != "" {
+			return os.RemoveAll(s.Dir)
+		}
+	case DeviceRepoSource:
+		if s.dir != "" {
+			return os.RemoveAll(s.dir)
+		}
+	}
+	return nil
+}
+
+// SourceCommit returns the commit of a git source, or "" for a directory.
+func SourceCommit(source fs.FS) string {
+	if repo, ok := source.(LabRepoSource); ok {
+		return repo.Commit
+	}
+	return ""
 }
 
 // Create a new temporary directory.
