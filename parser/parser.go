@@ -27,6 +27,11 @@ import (
 const (
 	htmlTemplateFileName = "template.html"
 	fallbackManualTitle  = "NeedForHeat manual"
+
+	// deviceTemplatePath is the template for device manuals in the main manual source. The manuals of a firmware
+	// repository use it instead of the repository's own template, so that they have the deployment's brand and
+	// light/dark handling (needforheat-manuals tools/apply_brand.py), like all other pages.
+	deviceTemplatePath = "devices/" + htmlTemplateFileName
 )
 
 var (
@@ -55,6 +60,9 @@ type HTMLTemplate struct {
 type Parser struct {
 	destFS fs.FS
 
+	// mainFS is the main manual source being parsed (not a firmware repository); see deviceTemplatePath.
+	mainFS fs.FS
+
 	// Temporarily store the current filePath being parsed.
 	currentFile string
 }
@@ -76,6 +84,9 @@ func New(destFS fs.FS) *Parser {
 func (p *Parser) Parse(sourceFS fs.FS) error {
 	if sourceFS == nil {
 		return nil
+	}
+	if _, isDeviceRepo := sourceFS.(DeviceRepoSource); !isDeviceRepo {
+		p.mainFS = sourceFS
 	}
 
 	err := p.parseRecursive(sourceFS, ".")
@@ -162,7 +173,7 @@ func (p *Parser) parseMdToHTML(sourceFS fs.FS, filePath string) error {
 
 	renderedHTML := markdown.Render(doc, htmlRenderer)
 
-	t, err := p.findTemplate(sourceFS, filePath)
+	t, err := p.templateFor(sourceFS, filePath)
 	if err != nil {
 		return err
 	}
@@ -224,6 +235,15 @@ func (p *Parser) getRepoManual(sourceFS fs.FS, filePath string) error {
 	defer CloseSource(deviceRepo) //nolint:errcheck // a leftover temporary directory is harmless
 
 	return p.Parse(deviceRepo)
+}
+
+// Return the template for the file at filePath: for the manuals of a firmware repository the main source's
+// devices/template.html when it has one, otherwise the nearest template.html (see findTemplate).
+func (p *Parser) templateFor(sourceFS fs.FS, filePath string) (*template.Template, error) {
+	if _, isDeviceRepo := sourceFS.(DeviceRepoSource); isDeviceRepo && p.mainFS != nil && fileExists(p.mainFS, deviceTemplatePath) {
+		return template.New(htmlTemplateFileName).ParseFS(p.mainFS, deviceTemplatePath)
+	}
+	return p.findTemplate(sourceFS, filePath)
 }
 
 // Return the template that should be used for the file at the specified filePath.
