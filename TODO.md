@@ -12,5 +12,5 @@ Items that touch several repositories are written out in full in one *lead* repo
 
 - [ ] → Finish the rename from Twomes to NeedForHeat — see [needforheat-generic-firmware](https://github.com/energiegedrag-nl/needforheat-generic-firmware/blob/main/TODO.md#rename)
 - [ ] → CONTRIBUTING.md with the branching workflow — see [needforheat-generic-firmware](https://github.com/energiegedrag-nl/needforheat-generic-firmware/blob/main/TODO.md#contrib)
-- [ ] → Remove the duplicated header in manuals, FAQ and privacy pages — see [needforheat-manuals](https://github.com/energiegedrag-nl/needforheat-manuals/blob/prd/TODO.md#header)
+- [x] → Remove the duplicated header in manuals, FAQ and privacy pages (v1.5.0: device manuals use the main source's devices/template.html) — see [needforheat-manuals](https://github.com/energiegedrag-nl/needforheat-manuals/blob/prd/TODO.md#header)
 - [ ] → Language in the path, so relative links work — see [needforheat-manuals](https://github.com/energiegedrag-nl/needforheat-manuals/blob/prd/TODO.md#lang)
