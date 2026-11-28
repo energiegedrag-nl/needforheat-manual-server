@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"testing/fstest"
 
 	"github.com/energiegedrag-nl/needforheat-manual-server/wfs/dirfs"
 )
@@ -67,5 +68,45 @@ func TestIsManualFile(t *testing.T) {
 		if got := isManualFile(dir); got != want {
 			t.Errorf("isManualFile(%q) = %v, want %v", dir, got, want)
 		}
+	}
+}
+
+// The manuals of a firmware repository get the main source's devices/template.html (the deployment's brand), not the
+// repository's own template; without one in the main source, the repository's template is used as before.
+func TestDeviceRepoManualsUseMainDeviceTemplate(t *testing.T) {
+	repo := DeviceRepoSource{
+		FS: fstest.MapFS{
+			"docs/manuals/template.html":                   {Data: []byte("OLD {{.Title}}")},
+			"docs/manuals/installation/languages/nl-NL.md": {Data: []byte("# Woonkamermodule\n\nTekst.")},
+		},
+		deviceName: "living-room",
+	}
+	page := "devices/living-room/installation/manufacturer/nl-NL/index.html"
+
+	for _, tc := range []struct {
+		name string
+		main fstest.MapFS
+		want string
+	}{
+		{"main template", fstest.MapFS{"devices/template.html": {Data: []byte("BRAND {{.Title}} {{.Language}}")}}, "BRAND Woonkamermodule nl-NL"},
+		{"no main template", fstest.MapFS{"README.md": {Data: []byte("# readme")}}, "OLD Woonkamermodule"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dest := t.TempDir()
+			p := New(dirfs.New(dest))
+			if err := p.Parse(tc.main); err != nil {
+				t.Fatalf("Parse main: %v", err)
+			}
+			if err := p.Parse(repo); err != nil {
+				t.Fatalf("Parse repo: %v", err)
+			}
+			got, err := os.ReadFile(filepath.Join(dest, filepath.FromSlash(page)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(got) != tc.want {
+				t.Fatalf("got %q, want %q", got, tc.want)
+			}
+		})
 	}
 }
