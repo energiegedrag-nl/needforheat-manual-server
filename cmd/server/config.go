@@ -30,7 +30,13 @@ type Config struct {
 	// A git repository has to start with https:// and end with .git (e.g. 'https://github.com/energiegedrag-nl/needforheat-presence-detector-firmware.git').
 	//
 	// The default branch is used, unless you set NFH_MANUAL_SOURCE_BRANCH to a branch name.
-	Source fs.FS
+	//
+	// OpenSource fetches the source: a git repository is cloned again on every call (start-up and each reload).
+	OpenSource func() (fs.FS, error)
+
+	// SourceName and SourceBranch describe the source, for the admin status.
+	SourceName   string
+	SourceBranch string
 
 	// FallbackLanguage sets the fallback language for when
 	// a client's Accept-Language header does not contain any available language.
@@ -39,16 +45,24 @@ type Config struct {
 	//
 	// This must be a valid language code (e.g. nl-NL or en-US).
 	FallbackLanguage language.Tag
+
+	// AdminAddr is the address of the admin routes (GET /admin/status, POST /admin/reload), e.g. ":8081".
+	//
+	// Set by environment variable NFH_ADMIN_ADDR. Empty (the default) means no admin routes.
+	// Use a port that is only reachable from inside the server, not the public one.
+	AdminAddr string
+
+	// AdminToken, when set, must be sent as "Authorization: Bearer <token>" to the admin routes.
+	//
+	// Set by environment variable NFH_ADMIN_TOKEN.
+	AdminToken string
 }
 
 // Get configuration from environment variables.
 // An error is returned if an environment variable is not set
 // and there is no default setting for it or if a setting was invalid.
 func getConfig() (*Config, error) {
-	source, err := parseSourceEnv()
-	if err != nil {
-		return nil, err
-	}
+	openSource, name, branch := parseSourceEnv()
 
 	fallbackLang, err := parseFallbackLangEnv()
 	if err != nil {
@@ -56,12 +70,16 @@ func getConfig() (*Config, error) {
 	}
 
 	return &Config{
-		Source:           source,
+		OpenSource:       openSource,
+		SourceName:       name,
+		SourceBranch:     branch,
 		FallbackLanguage: fallbackLang,
+		AdminAddr:        os.Getenv("NFH_ADMIN_ADDR"),
+		AdminToken:       os.Getenv("NFH_ADMIN_TOKEN"),
 	}, nil
 }
 
-func parseSourceEnv() (fs.FS, error) {
+func parseSourceEnv() (func() (fs.FS, error), string, string) {
 	sourceEnv, ok := os.LookupEnv("NFH_MANUAL_SOURCE")
 	if !ok {
 		sourceEnv = SourceEnvDefault
@@ -74,10 +92,10 @@ func parseSourceEnv() (fs.FS, error) {
 		if sourceBranchEnv != "" {
 			log.Println("using branch", sourceBranchEnv)
 		}
-		return parser.NewLabRepoSource(sourceEnv, sourceBranchEnv, nil)
+		return func() (fs.FS, error) { return parser.NewLabRepoSource(sourceEnv, sourceBranchEnv, nil) }, sourceEnv, sourceBranchEnv
 	}
 	log.Println("using local directory", sourceEnv, "as manual source")
-	return parser.NewLabDirSource(sourceEnv)
+	return func() (fs.FS, error) { return parser.NewLabDirSource(sourceEnv) }, sourceEnv, ""
 }
 
 func parseFallbackLangEnv() (language.Tag, error) {

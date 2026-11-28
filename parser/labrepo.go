@@ -9,16 +9,20 @@ import (
 // LabRepoSource is a git repo that contains manuals made by a lab.
 type LabRepoSource struct {
 	fs.FS
+	// Dir is the directory of the clone; CloseSource removes it.
+	Dir string
+	// Commit is the commit that was cloned.
+	Commit string
 }
 
 // Create a new source filesystem from a directory at path.
 func NewLabRepoSource(url string, branch string, auth transport.AuthMethod) (fs.FS, error) {
-	gitFS, _, err := newGitFSWithAuth(url, branch, auth)
+	clone, err := newGitFSWithAuth(url, branch, auth)
 	if err != nil {
 		return nil, err
 	}
 
-	return LabRepoSource{gitFS}, nil
+	return LabRepoSource{FS: clone.fsys, Dir: clone.dir, Commit: clone.commit}, nil
 }
 
 // Get the path to copy a file to at the destination filesystem.

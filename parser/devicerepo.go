@@ -15,6 +15,8 @@ import (
 type DeviceRepoSource struct {
 	fs.FS
 	deviceName string
+	// dir is the directory of the clone; CloseSource removes it.
+	dir string
 }
 
 // Create a new source filesystem from the firmware repository at url.
@@ -23,7 +25,7 @@ type DeviceRepoSource struct {
 // repository are placed under that name, because that is where the app looks. The repository name is only used when
 // deviceName is empty: since the repositories were renamed (twomes-… to needforheat-…) the two no longer match.
 func NewDeviceRepoSource(url string, deviceName string, auth transport.AuthMethod) (fs.FS, error) {
-	gitFS, repoName, err := newGitFSWithAuth(url, "", auth)
+	clone, err := newGitFSWithAuth(url, "", auth)
 	if err != nil {
 		if errors.Is(err, transport.ErrAuthenticationRequired) {
 			log.Println("device repo for", url, "could not be opened because it needs authentication")
@@ -34,9 +36,9 @@ func NewDeviceRepoSource(url string, deviceName string, auth transport.AuthMetho
 	}
 
 	if deviceName == "" {
-		deviceName = repoName
+		deviceName = path.Base(url)
 	}
-	return DeviceRepoSource{gitFS, deviceName}, nil
+	return DeviceRepoSource{FS: clone.fsys, deviceName: deviceName, dir: clone.dir}, nil
 }
 
 // Get the path to copy a file to at the destination filesystem.
